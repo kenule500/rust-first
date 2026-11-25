@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GIA Systems - Onboarding Workflow (Final)</title>
+<style>
+  :root {
+    --primary: #2563EB;
+    --primary-hover: #1D4ED8;
+    --primary-light: #EFF6FF;
+    --success: #10B981;
+    --danger: #EF4444;
+    --warning: #F59E0B;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB;
+    --gray-400: #9CA3AF;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+    --gray-700: #374151;
+    --gray-900: #111827;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--gray-100); color: var(--gray-900); line-height: 1.5; -webkit-font-smoothing: antialiased; padding-bottom: 240px; }
+  
+  .container { max-width: 850px; margin: 40px auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 40px; }
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .progress-bar { display: flex; justify-content: space-between; margin-bottom: 40px; position: relative; }
+  .progress-bar::before { content: ''; position: absolute; top: 16px; left: 0; right: 0; height: 2px; background: var(--gray-200); z-index: 0; }
+  .step { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .step-circle { width: 32px; height: 32px; border-radius: 50%; background: var(--gray-200); color: var(--gray-500); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; border: 2px solid white; }
+  .step.active .step-circle { background: var(--primary); color: white; }
+  .step.completed .step-circle { background: var(--success); color: white; }
+  .step-label { margin-top: 8px; font-size: 11px; color: var(--gray-400); font-weight: 500; text-align: center; max-width: 80px; line-height: 1.3; }
+  .step.active .step-label { color: var(--primary); font-weight: 600; }
+
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; color: var(--gray-900); letter-spacing: -0.02em; }
+  h3 { font-size: 12px; font-weight: 700; color: var(--gray-700); text-transform: uppercase; letter-spacing: 0.05em; margin: 32px 0 12px 0; }
+  h4 { font-size: 14px; font-weight: 600; color: var(--gray-700); margin: 24px 0 12px 0; }
+  .subtitle { color: var(--gray-500); margin-bottom: 32px; font-size: 15px; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .form-group { margin-bottom: 20px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--gray-900); }
+  label span.required { color: var(--danger); }
+  input, select { width: 100%; padding: 10px 14px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 15px; transition: all 0.2s; background: white; }
+  input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+
+  .tier-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .tier-card { border: 1px solid var(--gray-200); border-radius: 8px; padding: 24px; cursor: pointer; transition: all 0.2s; background: white; position: relative; }
+  .tier-card:hover { border-color: var(--gray-300); background: var(--gray-50); }
+  .tier-card.selected { border-color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 2px var(--primary); }
+  .tier-card .badge { position: absolute; top: -10px; right: 16px; background: var(--primary); color: white; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 12px; text-transform: uppercase; }
+  .tier-card .price { font-size: 24px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+  .tier-card .period { font-size: 14px; color: var(--gray-500); font-weight: 400; }
+  .tier-card h4 { font-size: 18px; font-weight: 600; margin-bottom: 12px; color: var(--gray-900); }
+  .tier-card p { font-size: 14px; color: var(--gray-600); margin: 0; line-height: 1.5; }
+  .tier-card ul { margin-top: 16px; padding-left: 20px; font-size: 13px; color: var(--gray-600); line-height: 1.6; }
+
+  .billing-cadence { display: flex; gap: 16px; margin-bottom: 24px; background: var(--gray-50); padding: 16px; border-radius: 8px; border: 1px solid var(--gray-200); }
+  .billing-option { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; font-weight: 500; }
+  
+  .summary-box { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+  .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+  .summary-row.total { border-top: 1px solid var(--gray-200); padding-top: 12px; margin-top: 12px; font-weight: 700; font-size: 16px; color: var(--gray-900); }
+
+  .btn-row { display: flex; justify-content: space-between; align-items: center; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--gray-200); }
+  .btn { padding: 10px 20px; border-radius: 8px; font-weight: 500; font-size: 14px; cursor: pointer; transition: all 0.2s; border: none; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-secondary { background: white; color: var(--gray-700); border: 1px solid var(--gray-300); }
+  .btn-secondary:hover { background: var(--gray-50); }
+  .btn-link { background: none; color: var(--primary); text-decoration: none; font-size: 14px; cursor: pointer; border: none; font-weight: 500; }
+  .btn-test { padding: 8px 12px; font-size: 13px; margin-left: 12px; white-space: nowrap; }
+  .btn-small { padding: 6px 12px; font-size: 13px; }
+
+  .api-row { display: flex; align-items: center; margin-bottom: 16px; }
+  .api-row input { flex: 1; }
+  .test-status { margin-left: 12px; font-size: 18px; width: 24px; text-align: center; }
+
+  .tabs { display: flex; border-bottom: 1px solid var(--gray-200); margin-bottom: 24px; overflow-x: auto; }
+  .tab { padding: 12px 16px; font-size: 14px; font-weight: 500; color: var(--gray-500); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+  .tab:hover { color: var(--gray-700); }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .disabled-overlay { opacity: 0.5; pointer-events: none; position: relative; }
+  .upgrade-note { background: #FEF3C7; color: #92400E; padding: 12px; border-radius: 8px; font-size: 13px; margin-top: 12px; display: none; border: 1px solid #FDE68A; }
+  .info-note { background: var(--primary-light); color: #1E40AF; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; border: 1px solid #BFDBFE; }
+  .success-note { background: #D1FAE5; color: #065F46; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; border: 1px solid #A7F3D0; display: none; }
+
+  /* Dev Console */
+  #dev-console {
+    position: fixed; bottom: 0; left: 0; right: 0; 
+    background: #0d1117; color: #c9d1d9; 
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; 
+    font-size: 12px; padding: 16px 24px; 
+    max-height: 220px; overflow-y: auto; 
+    border-top: 2px solid #30363d; z-index: 1000;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+  }
+  #dev-console-header {
+    color: #58a6ff; font-weight: bold; margin-bottom: 8px; 
+    border-bottom: 1px solid #30363d; padding-bottom: 6px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .log-entry { margin-bottom: 4px; line-height: 1.4; animation: slideIn 0.2s ease; }
+  .log-service { color: #7ee787; font-weight: 600; }
+  .log-action { color: #d2a8ff; }
+  .log-kafka { color: #ffa657; }
+  .log-db { color: #79c0ff; }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1: SIGNUP (TA-01) -->
+<div id="screen-1" class="screen active">
+  <div class="container">
+    <h1>Create your GIA Systems account</h1>
+    <p class="subtitle">Set up your organization. Subscription tier will be selected on the next page.</p>
+    <div class="form-group"><label>Company Name <span class="required">*</span></label><input type="text" placeholder="e.g. Acme Roofing LLC"></div>
+    <div class="form-group"><label>Work Email <span class="required">*</span></label><input type="email" placeholder="you@company.com"></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Password <span class="required">*</span></label><input type="password" placeholder="Min 8 chars, 1 number, 1 symbol"></div>
+      <div class="form-group"><label>Confirm Password <span class="required">*</span></label><input type="password" placeholder="Re-enter password"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-link">Already have an account? Log in</button>
+      <button class="btn btn-primary" onclick="showScreen(2)">Continue to Tier Selection</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 2: SUBSCRIPTION TIER (TA-01b) -->
+<div id="screen-2" class="screen">
+  <div class="container">
+    <h1>Select your Subscription Tier</h1>
+    <p class="subtitle">Choose the plan that best fits your operational needs. All plans include a 14-day free trial.</p>
+    
+    <div class="tier-cards">
+      <div class="tier-card" onclick="selectTier('Base', this)">
+        <div class="price">$300<span class="period">/month</span></div>
+        <h4>Base</h4>
+        <p>15 agents, 1 workspace, 10k SMS, 5 seats</p>
+        <ul><li>Core AI agents (1-15)</li><li>Basic reporting</li><li>Email support</li></ul>
+      </div>
+      <div class="tier-card selected" onclick="selectTier('Premium', this)">
+        <div class="badge">Most Popular</div>
+        <div class="price">$500<span class="period">/month</span></div>
+        <h4>Premium</h4>
+        <p>20 agents, 1 workspace, 50k SMS, 15 seats</p>
+        <ul><li>Full AI: Storm Detection, Invoicing, Estimation</li><li>AI Image Diagnosis</li><li>Custom Roles</li><li>Priority support</li></ul>
+      </div>
+      <div class="tier-card" onclick="selectTier('Enterprise', this)">
+        <div class="price">$1,200+<span class="period">/month</span></div>
+        <h4>Enterprise</h4>
+        <p>Unlimited workspaces, 200k SMS, unlimited seats</p>
+        <ul><li>Custom pricing & SLA</li><li>Dedicated CSM</li><li>SSO & Advanced Security</li><li>Custom Roles</li></ul>
+      </div>
+    </div>
+
+    <div class="billing-cadence">
+      <label class="billing-option"><input type="radio" name="billing" checked style="width:auto;"> Monthly (default)</label>
+      <label class="billing-option"><input type="radio" name="billing" style="width:auto;"> Annual (save 17% — Enterprise only)</label>
+    </div>
+
+    <div class="summary-box">
+      <div class="summary-row"><span>Selected tier:</span> <span id="summary-tier" style="font-weight:600;">Premium</span></div>
+      <div class="summary-row"><span>Monthly total:</span> <span id="summary-price">$500</span></div>
+      <div class="summary-row total"><span>Trial:</span> <span style="color:var(--success);">14 days free</span></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="showScreen(1)">Back to Signup</button>
+      <button class="btn btn-primary" onclick="showScreen(3)">Continue to Organization Setup</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3: STEP 1 - ORGANIZATION SETUP (TA-02) -->
+<div id="screen-3" class="screen">
+  <div class="container">
+    <div class="progress-bar">
+      <div class="step active"><div class="step-circle">1</div><div class="step-label">Organization</div></div>
+      <div class="step"><div class="step-circle">2</div><div class="step-label">Workspace</div></div>
+      <div class="step"><div class="step-circle">3</div><div class="step-label">Configuration</div></div>
+      <div class="step"><div class="step-circle">4</div><div class="step-label">API Keys & Compliance</div></div>
+      <div class="step"><div class="step-circle">5</div><div class="step-label">Team & Launch</div></div>
+    </div>
+    <h1>Organization Setup</h1>
+    <p class="subtitle">Capture legal entity details for billing and compliance. (~60 seconds)</p>
+    
+    <h3>Legal Details</h3>
+    <div class="form-grid">
+      <div class="form-group"><label>Legal Company Name <span class="required">*</span></label><input type="text" placeholder="Acme Roofing LLC"></div>
+      <div class="form-group"><label>Billing Contact Name <span class="required">*</span></label><input type="text" placeholder="John Doe"></div>
+      <div class="form-group"><label>Billing Email <span class="required">*</span></label><input type="email" placeholder="billing@company.com"></div>
+      <div class="form-group"><label>Billing Phone <span class="required">*</span></label><input type="tel" placeholder="+1 (555) 123-4567"></div>
+      <div class="form-group"><label>Timezone</label><select><option>America/Chicago (Browser Default)</option><option>America/New_York</option></select></div>
+      <div class="form-group"><label>Country <span class="required">*</span></label><select><option>United States</option><option>Canada</option><option>United Kingdom</option><option>Australia</option></select></div>
+      <div class="form-group full"><label>Business Address Line 1 <span class="required">*</span></label><input type="text" placeholder="123 Main St"></div>
+      <div class="form-group full"><label>Business Address Line 2</label><input type="text" placeholder="Suite 100 (Optional)"></div>
+      <div class="form-group"><label>City <span class="required">*</span></label><input type="text" placeholder="Dallas"></div>
+      <div class="form-group"><label>State / Province <span class="required">*</span></label><select><option>Texas</option><option>California</option><option>Ontario</option></select></div>
+      <div class="form-group"><label>Postal Code <span class="required">*</span></label><input type="text" placeholder="75001"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="showScreen(2)">Back</button>
+      <button class="btn btn-primary" onclick="showScreen(4)">Save & Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 4: STEP 2 - WORKSPACE CREATION (TA-03) -->
+<div id="screen-4" class="screen">
+  <div class="container">
+    <div class="progress-bar">
+      <div class="step completed"><div class="step-circle">✓</div></div>
+      <div class="step active"><div class="step-circle">2</div><div class="step-label">Workspace</div></div>
+      <div class="step"><div class="step-circle">3</div><div class="step-label">Configuration</div></div>
+      <div class="step"><div class="step-circle">4</div><div class="step-label">API Keys & Compliance</div></div>
+      <div class="step"><div class="step-circle">5</div><div class="step-label">Team & Launch</div></div>
+    </div>
+    <h1>Workspace Creation</h1>
+    <p class="subtitle">Define the operational unit. This drives agent behavior and pricing. (~90 seconds)</p>
+    
+    <h3>Workspace Identity</h3>
+    <div class="form-grid">
+      <div class="form-group"><label>Workspace Name <span class="required">*</span></label><input type="text" placeholder="e.g. Texas Division"></div>
+      <div class="form-group"><label>Workspace URL Slug <span class="required">*</span></label><input type="text" value="texas-division" style="color:var(--gray-500);"></div>
+    </div>
+
+    <h3>Industry Bundle <span class="required">*</span></h3>
+    <div class="tier-cards" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="tier-card" onclick="selectBundle('exterior', this)"><h4>Exterior Envelope</h4><p>Roofing → Gutters, Siding, Windows</p></div>
+      <div class="tier-card" onclick="selectBundle('mep', this)"><h4>MEP</h4><p>HVAC → Plumbing, Electrical</p></div>
+      <div class="tier-card" onclick="selectBundle('property', this)"><h4>Property Maintenance</h4><p>Landscaping → Fencing, Snow Removal</p></div>
+      <div class="tier-card" onclick="selectBundle('interior', this)"><h4>Interior Finishing</h4><p>Flooring → Painting, Drywall</p></div>
+    </div>
+    <div class="form-grid" style="margin-top:16px; background:var(--gray-50); padding:20px; border-radius:8px; border:1px solid var(--gray-200);">
+      <div class="form-group" style="margin-bottom:0;"><label>Primary Industry (Auto-filled)</label><input type="text" id="primary-industry" readonly placeholder="Select a bundle above"></div>
+      <div class="form-group" id="ancillary-options" style="margin-bottom:0;"><label>Ancillary Industries</label><p style="font-size:13px; color:var(--gray-500); margin-top:8px;">Select a bundle above to see options.</p></div>
+    </div>
+
+    <h3>Service Area <span class="required">*</span></h3>
+    <div style="display:flex; gap:12px; margin-bottom:12px;">
+      <input type="text" placeholder="Zip Code" style="width:140px;"><input type="number" placeholder="Radius (miles)" value="25" style="width:160px;">
+      <button class="btn btn-secondary" onclick="addServiceArea()">Add</button>
+    </div>
+    <div id="service-area-list" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+
+    <h3>Storm Triggers (Agent 16)</h3>
+    <div id="storm-triggers" class="form-grid">
+      <div class="form-group full"><label style="display:flex; align-items:center; gap:8px; font-weight:400;"><input type="checkbox" checked style="width:auto;"> Enable Storm Detection</label></div>
+      <div class="form-group"><label>Hail Threshold: <span id="hail-val">0.75</span> in</label><input type="range" min="0.25" max="2.00" step="0.25" value="0.75" oninput="document.getElementById('hail-val').innerText=this.value"></div>
+      <div class="form-group"><label>Wind Threshold: <span id="wind-val">50</span> mph</label><input type="range" min="30" max="100" step="5" value="50" oninput="document.getElementById('wind-val').innerText=this.value"></div>
+    </div>
+    <div id="base-tier-note" class="upgrade-note">⚠️ Upgrade to Premium to enable Storm Detection.</div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="showScreen(3)">Back</button>
+      <button class="btn btn-primary" onclick="showScreen(5)">Save & Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 5: STEP 3 - CONFIGURATION (TA-04) -->
+<div id="screen-5" class="screen">
+  <div class="container">
+    <div class="progress-bar">
+      <div class="step completed"><div class="step-circle">✓</div></div>
+      <div class="step completed"><div class="step-circle">✓</div></div>
+      <div class="step active"><div class="step-circle">3</div><div class="step-label">Configuration</div></div>
+      <div class="step"><div class="step-circle">4</div><div class="step-label">API Keys & Compliance</div></div>
+      <div class="step"><div class="step-circle">5</div><div class="step-label">Team & Launch</div></div>
+    </div>
+    <h1>Configuration</h1>
+    <p class="subtitle">Configure pricing, integrations, and agent behavior. (~3 minutes)</p>
+    
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(1)">1. Pricing (Required)</div>
+      <div class="tab" onclick="switchTab(2)">2. Integrations</div>
+      <div class="tab" onclick="switchTab(3)">3. Agent Customization</div>
+    </div>
+    
+    <!-- TAB 1: PRICING -->
+    <div id="tab-1" class="tab-content active">
+      <h3>Pricing Table</h3>
+      <div class="form-group"><label>Pricing Table Name <span class="required">*</span></label><input type="text" placeholder="e.g. 2026 Standard Rates"></div>
+      <div class="form-grid">
+        <div class="form-group"><label>Material Tier 1 Name <span class="required">*</span></label><input type="text" value="Standard"></div>
+        <div class="form-group"><label>Base Price per Square (USD) <span class="required">*</span></label><input type="number" value="3.50"></div>
+        <div class="form-group"><label>Labor Multiplier <span class="required">*</span></label><input type="number" value="1.2" step="0.1"></div>
+        <div class="form-group"><label>Material Tier 2 Name</label><input type="text" placeholder="Premium (Optional)"></div>
+        <div class="form-group"><label>Base Price per Square (USD)</label><input type="number" placeholder="Optional"></div>
+        <div class="form-group"><label>Labor Multiplier</label><input type="number" placeholder="Optional" step="0.1"></div>
+      </div>
+      <button class="btn btn-secondary btn-small" style="margin-bottom: 24px;">+ Add another material tier</button>
+      
+      <h3>Labor Rate</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>Region</label><input type="text" placeholder="e.g. Dallas Metro"></div>
+        <div class="form-group"><label>Labor Rate per Hour (USD) <span class="required">*</span></label><input type="number" value="45.00"></div>
+        <div class="form-group"><label>Effective Date</label><input type="date"></div>
+      </div>
+      <button class="btn btn-secondary btn-small">Use industry defaults</button>
+    </div>
+
+    <!-- TAB 2: INTEGRATIONS -->
+    <div id="tab-2" class="tab-content">
+      <h3>Connect your tools</h3>
+      <div class="form-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="tier-card" style="text-align:center; padding:16px;"><h4 style="font-size:15px;">Stripe</h4><p style="font-size:12px; margin-bottom:8px;">Not connected</p><button class="btn btn-primary btn-small" style="width:100%;">Connect (OAuth)</button></div>
+        <div class="tier-card" style="text-align:center; padding:16px;"><h4 style="font-size:15px;">QuickBooks</h4><p style="font-size:12px; margin-bottom:8px;">Not connected</p><button class="btn btn-primary btn-small" style="width:100%;">Connect (OAuth)</button></div>
+        <div class="tier-card" style="text-align:center; padding:16px;"><h4 style="font-size:15px;">Jobber</h4><p style="font-size:12px; margin-bottom:8px;">Not connected</p><button class="btn btn-primary btn-small" style="width:100%;">Connect (OAuth)</button></div>
+        <div class="tier-card" style="text-align:center; padding:16px;"><h4 style="font-size:15px;">EagleView</h4><p style="font-size:12px; margin-bottom:8px;">Not connected</p><button class="btn btn-primary btn-small" style="width:100%;">Enter API Key</button></div>
+        <div class="tier-card" style="text-align:center; padding:16px;"><h4 style="font-size:15px;">SendGrid</h4><p style="font-size:12px; margin-bottom:8px;">Not connected</p><button class="btn btn-primary btn-small" style="width:100%;">Enter API Key</button></div>
+        <div class="tier-card" style="text-align:center; padding:16px;"><h4 style="font-size:15px;">Meta (FB/IG)</h4><p style="font-size:12px; margin-bottom:8px;">Not connected</p><button class="btn btn-primary btn-small" style="width:100%;">Connect (OAuth)</button></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: AGENT CUSTOMIZATION -->
+    <div id="tab-3" class="tab-content">
+      <h3>Agent Customization</h3>
+      <p style="margin-bottom:16px; font-size:14px; color:var(--gray-600);">Customize tone, temperature, and strict mode for all 20 agents. Click a row to expand and edit the custom prompt.</p>
+      <div style="background:var(--gray-50); padding:32px; border-radius:8px; text-align:center; color:var(--gray-500); border:1px solid var(--gray-200);">
+        <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; padding:12px; border-bottom:1px solid var(--gray-200); font-weight:600; font-size:13px; color:var(--gray-700);">
+          <span>Agent Name</span><span>Tone</span><span>Temperature</span><span>Strict Mode</span>
+        </div>
+        <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; padding:12px; border-bottom:1px solid var(--gray-200); font-size:14px; align-items:center;">
+          <span>Agent 1: Lead Qualifier</span>
+          <select style="padding:4px;"><option>professional</option><option>empathetic</option></select>
+          <span>0.7</span>
+          <span style="color:var(--success);">ON</span>
+        </div>
+        <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; padding:12px; font-size:14px; align-items:center; opacity:0.6;">
+          <span>... (19 more agents)</span><span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="showScreen(4)">Back</button>
+      <div style="display:flex; gap:12px;">
+        <button class="btn btn-secondary" onclick="showScreen(6)">Skip for now</button>
+        <button class="btn btn-primary" onclick="showScreen(6)">Save & Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 6: STEP 4 - MASTER API KEYS & COMPLIANCE (TA-05) -->
+<div id="screen-6" class="screen">
+  <div class="container">
+    <div class="progress-bar">
+      <div class="step completed"><div class="step-circle">✓</div></div>
+      <div class="step completed"><div class="step-circle">✓</div></div>
+      <div class="step completed"><div class="step-circle">✓</div></div>
+      <div class="step active"><div class="step-circle">4</div><div class="step-label">API Keys & Compliance</div></div>
+      <div class="step"><div class="step-circle">5</div><div class="step-label">Team & Launch</div></div>
+    </div>
+    <h1>Master API Keys & Compliance Check</h1>
+    <p class="subtitle">Connect master API credentials and run final compliance checks. (~2 minutes)</p>
+
+    <h3>Section A: Master API Keys <span style="font-weight:400; color:var(--gray-500); text-transform:none; font-size:13px;">(Optional, recommended)</span></h3>
+    <div class="info-note">These credentials unlock GIA's core capabilities. Twilio enables SMS outreach and MFA. Weather API enables dual-source storm verification (otherwise NOAA-only, requiring manual approval).</div>
+    
+    <h4>Section A1 — Twilio Credentials</h4>
+    <div class="api-row">
+      <input type="text" placeholder="Twilio Account SID (starts with AC)">
+      <button class="btn btn-secondary btn-test" onclick="testConnection(this)">Test</button>
+      <span class="test-status"></span>
+    </div>
+    <div class="api-row">
+      <input type="password" placeholder="Twilio Auth Token (Min 32 chars)">
+      <button class="btn btn-secondary btn-test" onclick="testConnection(this)">Test</button>
+      <span class="test-status"></span>
+    </div>
+
+    <h4>Section A2 — Weather API</h4>
+    <div class="api-row">
+      <input type="password" placeholder="Weather API Key (NOAA doesn't need one)">
+      <button class="btn btn-secondary btn-test" onclick="testConnection(this)">Test</button>
+      <span class="test-status"></span>
+    </div>
+    <p style="font-size:13px; color:var(--gray-500); margin-top:16px;">Note: If you skip Twilio, GIA functions but cannot send SMS. A banner will persist on your dashboard.</p>
+
+    <h3>Section B: Compliance Check <span style="font-weight:400; color:var(--gray-500); text-transform:none; font-size:13px;">(Optional, recommended)</span></h3>
+    <p style="margin-bottom:16px; font-size:14px; color:var(--gray-600);">Verify the workspace is legally and technically ready to send outbound messages before launch.</p>
+    
+    <div style="display:flex; gap:12px; margin-bottom:24px;">
+      <button class="btn btn-secondary" onclick="this.innerHTML='✓ DNC Check Passed'; this.style.borderColor='var(--success)'; this.style.color='var(--success)'; document.getElementById('compliance-status').style.display='block';">Run DNC Check</button>
+      <button class="btn btn-secondary" onclick="testConnection(this)">Test Twilio Pipeline</button>
+    </div>
+    
+    <div id="compliance-status" class="success-note">
+      ✅ <strong>Compliance check passed.</strong> Your workspace is legally and technically ready for outbound messaging.
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="showScreen(5)">Back</button>
+      <div style="display:flex; gap:12px;">
+        <button class="btn btn-secondary" onclick="showScreen(7)">Skip for now</button>
+        <button class="btn btn-primary" onclick="showScreen(7)">Save & Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 7: STEP 5 - TEAM INVITES & LAUNCH (TA-06) -->
+<div id="screen-7" class="screen">
+  <div class="container">
+    <div class="progress-bar">
+      <div class="step completed"><div class="step-circle">✓</div></div>
+      <div class="step completed"><div class="step-circle">✓</div></div>
+      <div class="step completed"><div class="step-circle">✓</div></div>
+      <div class="step completed"><div class="step-circle">✓</div></div>
+      <div class="step active"><div class="step-circle">5</div><div class="step-label">Team & Launch</div></div>
+    </div>
+    <h1>Team Invites & Launch</h1>
+    <p class="subtitle">Invite staff and launch the workspace. (~60 seconds)</p>
+
+    <h3>Section A: Invite Team <span style="font-weight:400; color:var(--gray-500); text-transform:none; font-size:13px;">(1 of 15 seats used)</span></h3>
+    <div style="display:flex; gap:12px; margin-bottom:24px;">
+      <input type="email" placeholder="colleague@company.com" style="flex:2;">
+      <select style="flex:1;">
+        <option value="">Select Role...</option>
+        <option value="TENANT_ADMIN">Tenant Admin</option>
+        <option value="SUPERVISOR">Supervisor</option>
+        <option value="OFFICE_MANAGER">Office Manager</option>
+        <option value="SALES_REP">Sales Rep</option>
+        <option value="ESTIMATOR">Estimator</option>
+        <option value="FIELD_TECH">Field Tech</option>
+        <option value="" disabled style="color:var(--gray-400);">— Custom Roles (None yet) —</option>
+      </select>
+      <button class="btn btn-secondary">Invite</button>
+    </div>
+
+    <h3>Section B: Launch Workspace</h3>
+    <div class="form-group"><label style="display:flex; align-items:center; gap:8px; font-weight:400; cursor:pointer;"><input type="checkbox" style="width:auto;"> I agree to the <a href="#" style="color:var(--primary); margin-left:4px;">Terms of Service</a> <span class="required">*</span></label></div>
+    <div class="form-group"><label style="display:flex; align-items:center; gap:8px; font-weight:400; cursor:pointer;"><input type="checkbox" style="width:auto;"> I agree to the <a href="#" style="color:var(--primary); margin-left:4px;">Privacy Policy</a> <span class="required">*</span></label></div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="showScreen(6)">Back</button>
+      <button class="btn btn-primary" onclick="launchWorkspace()" style="padding:12px 32px; font-size:16px;">🚀 Launch Workspace</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 8: DASHBOARD (Post-onboarding) -->
+<div id="screen-8" class="screen">
+  <div style="display:flex; min-height:100vh;">
+    <div style="width:240px; background:var(--gray-900); color:white; padding:24px 0; flex-shrink:0;">
+      <div style="padding:0 24px 24px; font-size:20px; font-weight:700; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:16px;">GIA Systems</div>
+      <div style="padding:10px 24px; background:rgba(255,255,255,0.05); color:white;">📊 Dashboard</div>
+      <div style="padding:10px 24px; color:var(--gray-400);">💬 Inbox</div>
+      <div style="padding:10px 24px; color:var(--gray-400);">🔨 Jobs</div>
+      <div style="padding:10px 24px; color:var(--gray-400);">⚙️ Settings</div>
+    </div>
+    <div style="flex:1; background:var(--gray-100); padding:24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; background:white; padding:12px 20px; border-radius:8px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+        <div style="font-weight:600;">Texas Division ▾</div>
+        <div style="width:32px; height:32px; background:var(--primary); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:600;">JD</div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:24px;">
+        <div style="background:white; padding:20px; border-radius:8px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><div style="font-size:13px; color:var(--gray-500);">Active Jobs</div><div style="font-size:24px; font-weight:700; margin-top:8px;">12</div></div>
+        <div style="background:white; padding:20px; border-radius:8px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><div style="font-size:13px; color:var(--gray-500);">Storm Alerts</div><div style="font-size:24px; font-weight:700; margin-top:8px; color:var(--primary);">1 Active</div></div>
+        <div style="background:white; padding:20px; border-radius:8px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><div style="font-size:13px; color:var(--gray-500);">SMS Credits</div><div style="font-size:24px; font-weight:700; margin-top:8px; color:var(--danger);">1,240</div></div>
+        <div style="background:white; padding:20px; border-radius:8px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><div style="font-size:13px; color:var(--gray-500);">AI Cost (Month)</div><div style="font-size:24px; font-weight:700; margin-top:8px;">$142.50</div></div>
+      </div>
+      <div style="background:white; border-radius:8px; padding:24px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+        <h3 style="margin-top:0; margin-bottom:16px;">Recent Activity</h3>
+        <div style="padding:12px 0; border-bottom:1px solid var(--gray-100); font-size:14px; display:flex; gap:12px;"><span>⛈️</span> <div><strong>Agent 16</strong> detected hail in 75001 <span style="color:var(--gray-500); font-size:13px;">(14 minutes ago)</span></div></div>
+        <div style="padding:12px 0; border-bottom:1px solid var(--gray-100); font-size:14px; display:flex; gap:12px;"><span>🧾</span> <div><strong>Agent 18</strong> sent invoice #1042 to John Doe ($7,036.25) <span style="color:var(--gray-500); font-size:13px;">(1 hour ago)</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BACKEND WORKFLOW SIMULATOR -->
+<div id="dev-console">
+  <div id="dev-console-header">
+    <span>🖥️ BACKEND WORKFLOW SIMULATOR (TA-01 to TA-06)</span>
+    <span style="font-size:11px; color:#8b949e; font-weight:normal;">Live Microservice & Kafka Event Trace</span>
+  </div>
+  <div id="console-output"></div>
+</div>
+
+<script>
+  let state = { tier: 'Premium', serviceAreas: 0 };
+
+  const workflowLogs = {
+    1: [
+      "▶ TRIGGER: User visits app.giasystems.io/signup",
+      "<span class='log-service'>[auth-service]</span> <span class='log-action'>POST /api/auth/sign-up</span>",
+      "<span class='log-db'>[auth-service]</span> Write: User (isSuperAdmin: false, passwordHash: Argon2id), LoginHistory",
+      "<span class='log-kafka'>[Kafka]</span> Publish: user.created",
+      "<span class='log-service'>[tenant-service]</span> Consume: user.created → Write: Organization (stripeCustomerId: null, tier: null), OrganizationMember (role: TENANT_ADMIN)",
+      "<span class='log-db'>[auth-service]</span> Write (Redis): session:&lt;sessionId&gt;",
+      "🔄 <span class='log-action'>[System]</span> Redirect: /onboarding/select-tier"
+    ],
+    2: [
+      "▶ TRIGGER: User lands on /onboarding/select-tier",
+      "<span class='log-service'>[tenant-service]</span> UPDATE Organization: tier = 'PREMIUM'",
+      "<span class='log-service'>[tenant-service]</span> Stripe API (async-stripe): Create customer with metadata {organizationId, tier}",
+      "<span class='log-db'>[tenant-service]</span> Write: Organization (stripeCustomerId updated)",
+      "<span class='log-db'>[tenant-service]</span> Write: Subscription (status: TRIALING, currentPeriodEnd: +14 days, tier: PREMIUM)",
+      "<span class='log-db'>[tenant-service]</span> Write: AuditLog (action: TIER_SELECTED)",
+      "<span class='log-kafka'>[Kafka]</span> Publish: subscription.created, tier.selected",
+      "🔄 <span class='log-action'>[System]</span> Redirect: /onboarding/step-2"
+    ],
+    3: [
+      "▶ TRIGGER: User lands on Step 1 (Organization Setup)",
+      "<span class='log-service'>[tenant-service]</span> <span class='log-action'>PUT /api/organizations/:id/setup</span>",
+      "<span class='log-db'>[tenant-service]</span> Update: Organization (legalName, billing fields, timezone, address, country)",
+      "<span class='log-db'>[tenant-service]</span> Update: OnboardingStepProgress (ORGANIZATION_SETUP: COMPLETED, completedAt: now)",
+      "<span class='log-db'>[tenant-service]</span> Write: AuditLog (action: ORGANIZATION_UPDATED)",
+      "<span class='log-kafka'>[Kafka]</span> Publish: organization.updated, onboarding.step_completed",
+      "🔄 <span class='log-action'>[System]</span> Redirect: /onboarding/step-3"
+    ],
+    4: [
+      "▶ TRIGGER: User lands on Step 2 (Workspace Creation)",
+      "<span class='log-service'>[tenant-service]</span> <span class='log-action'>POST /api/workspaces</span>",
+      "<span class='log-db'>[tenant-service]</span> Write: Workspace (status: SETUP), WorkspaceSettings, WorkspaceServiceArea × N",
+      "<span class='log-db'>[tenant-service]</span> Update: OnboardingStepProgress × 5 (steps 1-2 COMPLETED, 3-5 PENDING)",
+      "<span class='log-kafka'>[Kafka]</span> Publish: workspace.created, onboarding.step_completed",
+      "<span class='log-service'>[industry-service]</span> POST /api/workspaces/:id/industries → Write: WorkspaceIndustrySelection × 3",
+      "<span class='log-kafka'>[Kafka]</span> Publish: industry.selected",
+      "<span class='log-service'>[crm-service]</span> (Premium only) Write: WeatherTriggerConfig",
+      "<span class='log-service'>[agent-orchestration-service]</span> Consumes: workspace.created → gRPC to tenant-service to seed defaults",
+      "<span class='log-db'>[tenant-service]</span> Write: AgentCustomization × 20 (tone: professional, temp: 0.7, strictMode: true)",
+      "🔄 <span class='log-action'>[System]</span> Redirect: /onboarding/step-4"
+    ],
+    5: [
+      "▶ TRIGGER: User lands on Step 3 (Configuration)",
+      "<span class='log-service'>[estimation-service]</span> POST /api/workspaces/:id/pricing-tables → Write: PricingTable, PricingItem × N, LaborRateConfig",
+      "<span class='log-service'>[tenant-service]</span> POST /api/integrations/connect → Write: Integration, IntegrationCredential (AES-256-GCM, oauth2 crate with PKCE)",
+      "<span class='log-service'>[agent-orchestration-service]</span> PUT /api/workspaces/:id/agents/:agentId/customize → Update: AgentCustomization × N",
+      "<span class='log-db'>[tenant-service]</span> On Save: Write: WorkspaceAgentConfiguration × 20, OnboardingStepProgress (CONFIGURATION: COMPLETED), AuditLog",
+      "<span class='log-kafka'>[Kafka]</span> Publish: pricing_table.created, integration.connected, agent.customization_updated, agent_behavior.changed",
+      "🔄 <span class='log-action'>[System]</span> Redirect: /onboarding/step-5"
+    ],
+    6: [
+      "▶ TRIGGER: User lands on Step 4 (Master API Keys & Compliance Check)",
+      "<span class='log-service'>[tenant-service]</span> POST /api/organizations/:id/api-keys → Write: GlobalApiKey × N (AES-256-GCM via aes-gcm crate, data key from AWS KMS)",
+      "<span class='log-kafka'>[Kafka]</span> Publish: global_api_key.created",
+      "<span class='log-service'>[compliance-service]</span> POST /api/workspaces/:id/compliance-check → Read: DNC registry, Write: ComplianceCheck (result: ALLOWED)",
+      "<span class='log-db'>[tenant-service]</span> Update: OnboardingStepProgress (CONFIGURATION: COMPLETED), Write: AuditLog (GLOBAL_API_KEY_CREATED, COMPLIANCE_CHECK_RUN)",
+      "<span class='log-kafka'>[Kafka]</span> Publish: compliance_check.completed, onboarding.step_completed",
+      "🔄 <span class='log-action'>[System]</span> Redirect: /onboarding/step-6"
+    ],
+    7: [
+      "▶ TRIGGER: User lands on Step 5 (Team Invites & Launch)",
+      "<span class='log-service'>[tenant-service + auth-service]</span> POST /api/workspaces/:id/invites → Write: User, WorkspaceMember (role: system, customRoleId: null), OrganizationMember, EmailVerificationToken (SHA-256)",
+      "<span class='log-kafka'>[Kafka]</span> Publish: member.invited → Side effect: SendGrid invitation email",
+      "<span class='log-service'>[tenant-service]</span> <span class='log-action'>POST /api/workspaces/:id/launch</span>",
+      "<span class='log-db'>[tenant-service]</span> Update: Subscription (seatsUsed, status: ACTIVE), Workspace (status: ACTIVE)",
+      "<span class='log-db'>[tenant-service]</span> Update: OnboardingStepProgress × 5 (ALL COMPLETED), Write: AuditLog (action: WORKSPACE_LAUNCHED)",
+      "<span class='log-kafka'>[Kafka]</span> Publish: workspace.activated, onboarding.completed, agents.activated",
+      "<span class='log-service'>[analytics-service]</span> Write: ReportSchedule (weekly, recipients: [Tenant Admin email])",
+      "<span class='log-service'>[agent-orchestration-service]</span> Consumes: agents.activated → gRPC: Registers workspace with storm-service (Agent 16 polling)",
+      "<span class='log-service'>[agent-orchestration-service]</span> gRPC: Enables Agent 13 campaign engine, Initializes Agent 6 omnichannel listener",
+      "🎉 <span class='log-action'>[System]</span> Redirect: /dashboard with confetti & first-time tour modal"
+    ]
+  };
+
+  function showScreen(n) {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    document.getElementById(`screen-${n}`).classList.add('active');
+    window.scrollTo(0, 0);
+    if (n >= 1 && n <= 7) simulateWorkflow(n);
+    if (n === 4) updateUI();
+  }
+
+  function simulateWorkflow(step) {
+    const output = document.getElementById('console-output');
+    output.innerHTML = '';
+    const logs = workflowLogs[step] || [];
+    logs.forEach((log, index) => {
+      setTimeout(() => {
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.innerHTML = log;
+        output.appendChild(div);
+        output.scrollTop = output.scrollHeight;
+      }, index * 100);
+    });
+  }
+
+  function selectTier(tier, el) {
+    state.tier = tier;
+    document.querySelectorAll('#screen-2 .tier-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    
+    const prices = { 'Base': '$300', 'Premium': '$500', 'Enterprise': '$1,200+' };
+    document.getElementById('summary-tier').innerText = tier;
+    document.getElementById('summary-price').innerText = prices[tier];
+    
+    updateUI();
+  }
+
+  function updateUI() {
+    const stormSection = document.getElementById('storm-triggers');
+    const note = document.getElementById('base-tier-note');
+    if (state.tier === 'Base') {
+      stormSection.classList.add('disabled-overlay');
+      note.style.display = 'block';
+    } else {
+      stormSection.classList.remove('disabled-overlay');
+      note.style.display = 'none';
+    }
+  }
+
+  function selectBundle(key, el) {
+    document.querySelectorAll('#screen-4 .tier-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    const bundles = {
+      'exterior': { primary: 'Roofing', ancillary: ['Gutters', 'Siding'] },
+      'mep': { primary: 'HVAC', ancillary: ['Plumbing', 'Electrical'] },
+      'property': { primary: 'Landscaping', ancillary: ['Fencing', 'Snow Removal'] },
+      'interior': { primary: 'Flooring', ancillary: ['Painting', 'Drywall'] }
+    };
+    document.getElementById('primary-industry').value = bundles[key].primary;
+    document.getElementById('ancillary-options').innerHTML = `<label>Ancillary Industries</label>` + 
+      bundles[key].ancillary.map(a => `<label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:400; cursor:pointer;"><input type="checkbox" style="width:auto;"> ${a}</label>`).join('');
+  }
+
+  function addServiceArea() {
+    state.serviceAreas++;
+    const list = document.getElementById('service-area-list');
+    list.innerHTML += `<span style="background:var(--primary); color:white; padding:6px 12px; border-radius:16px; font-size:13px; display:inline-flex; align-items:center; gap:8px; font-weight:500;">75001 (25mi) <span style="cursor:pointer; font-size:16px; line-height:1;" onclick="this.parentElement.remove(); state.serviceAreas--;">×</span></span>`;
+  }
+
+  function switchTab(n) {
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === n - 1));
+    document.querySelectorAll('.tab-content').forEach((c, i) => c.classList.toggle('active', i === n - 1));
+  }
+
+  function testConnection(btn) {
+    const originalText = btn.innerText;
+    btn.innerText = 'Testing...';
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.innerText = originalText;
+      btn.disabled = false;
+      btn.nextElementSibling.innerHTML = '✅';
+    }, 600);
+  }
+
+  function launchWorkspace() {
+    document.getElementById('screen-7').innerHTML = '<div style="text-align:center; padding:100px 20px;"><h1 style="font-size:64px; margin-bottom:16px;">🎉</h1><h1 style="margin-bottom:12px;">Workspace Launched Successfully!</h1><p style="color:var(--gray-500); font-size:16px;">Redirecting to your dashboard...</p></div>';
+    setTimeout(() => showScreen(8), 1500);
+  }
+
+  // Initialize
+  updateUI();
+  simulateWorkflow(1);
+</script>
+</body>
+</html>
